@@ -8,6 +8,8 @@
   font-weight: normal;
 }
 
+
+
 a,
 .green {
   text-decoration: none;
@@ -15,12 +17,15 @@ a,
   transition: 0.4s;
 }
 
+
 .router-link-active {
   color: grey !important;
+  box-shadow: none;
+  transform: translateY(5px);
 }
 
 .router-link-exact-active {
-  text-decoration: underline;
+  /* text-decoration: underline; */
 }
 
 @media (hover: hover) {
