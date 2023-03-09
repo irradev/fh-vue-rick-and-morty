@@ -1,44 +1,34 @@
 <script setup lang="ts">
-import { useRoute } from 'vue-router'
-import { useQuery } from '@tanstack/vue-query'
-import rickAndMortyAPi from '@/api/rickAndMortyAPi'
-import characterStore from '@/store/characters.store'
-import type { Character } from '@/modules/characters/interfaces/characters'
-import { computed } from 'vue'
+import { watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
+import useCharacter from '@/modules/characters/composables/useCharacter'
 
+const router = useRouter()
 const route = useRoute()
+
 // ? ojo: al extraer con destructuración, pierde "reactividad"
 const { id } = route.params as { id: string }
 
-const getCharacterCacheFirst = async (characterId: string): Promise<Character> => {
-  if (characterStore.checkIdInStore(characterId)) {
-    return characterStore.ids.list[characterId]
-  }
+const { isLoading, list, character, hasError, errorMessage, getEpisodeNumber } = useCharacter(id)
 
-  const { data } = await rickAndMortyAPi.get<Character>(`/character/${characterId}`)
-  return data
-}
-
-const { data: character } = useQuery(['character', id], () => getCharacterCacheFirst(id), {
-  onSuccess(character) {
-    characterStore.loadedCharacter(character)
+// ? watchEffect, para observar todas las variables reactivas
+// ? watch, para observar una variable reactiva
+watch(hasError, () => {
+  if (hasError) {
+    router.replace('/characters')
   }
 })
-
-const getEpisodeNumber = computed((): string[] => {
-  const episodesList: string[] = []
-
-  character.value?.episode.forEach((link) => {
-    let linkSplitted = link.split('/')
-    episodesList.push(linkSplitted[linkSplitted.length - 1])
-  })
-
-  return episodesList
-})
+/**
+ // ? para estar al pendiente de propiedades más profundas en un objeto
+ // ? se usará la opción de deep:true -> {id, episodes: {id, link}} 
+ watch(prop, () => {}, {deep:true}) 
+ */
 </script>
 
 <template>
-  <h1 v-if="!character">Loading...</h1>
+  <h1 v-if="isLoading">Loading...</h1>
+  <h1 v-else-if="hasError">{{ errorMessage }}</h1>
+  <h1 v-else-if="!character">No se encontró el personaje</h1>
   <div v-else>
     <h1>{{ character.name }}</h1>
     <div class="character-container">
